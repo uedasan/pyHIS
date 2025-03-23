@@ -62,6 +62,17 @@ class HISFile:
         else:
             return image
 
+    def read_line(self, count, iy):
+        offset = self.offsets[count]
+        header = self.read_header(offset)
+        comment_length, width, height = header[1:4]
+        image_offset = offset + self.HEADER_SIZE + comment_length
+        line_offset = image_offset + width * iy * 2
+        line = np.frombuffer(buffer=self.mm,
+                             dtype=np.uint16,
+                             count=width,
+                             offset=line_offset)
+        return line
 
 if __name__=="__main__":
     from skimage.io import imsave
