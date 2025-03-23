@@ -42,6 +42,8 @@ class HISFile:
             comment_length, width, height = header[1:4]
             image_size = width * height * 2
             offset += self.HEADER_SIZE + comment_length + image_size
+            self.width = width
+            self.height = height
 
     def read_header(self, offset):
         return struct.unpack_from(self.HEADER_FORMAT, self.mm, offset)
