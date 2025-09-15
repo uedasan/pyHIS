@@ -27,7 +27,7 @@ class HISFile:
     def update_offsets(self):
         self.offsets = []
         offset = 0
-        while offset < len(self.mm):
+        while offset + self.HEADER_SIZE <= len(self.mm):
             self.offsets.append(offset)
             header = self.read_header(offset)
             if header[0] != b"IM":
