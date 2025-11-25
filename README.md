@@ -1,4 +1,4 @@
-# pyHIS
+# [pyHIS](https://github.com/uedasan/pyHIS)
 
 pyHIS is a Python library and CLI tool for reading HIS files and converting them to sequential TIFF images.
 
