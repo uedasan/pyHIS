@@ -27,8 +27,8 @@ class HISFile:
     def update_offsets(self):
         self.offsets = []
         offset = 0
-        while offset + self.HEADER_SIZE <= len(self.mm):
-            self.offsets.append(offset)
+        mm_len = len(self.mm)
+        while offset + self.HEADER_SIZE <= mm_len:
             header = self.read_header(offset)
             if header[0] != b"IM":
                 if offset == 0:
@@ -38,7 +38,11 @@ class HISFile:
                 raise NotImplementedError("only 16bit type is supported")
             comment_length, width, height = header[1:4]
             image_size = width * height * 2
-            offset += self.HEADER_SIZE + comment_length + image_size
+            chunk_size = self.HEADER_SIZE + comment_length + image_size
+            if offset + chunk_size > mm_len:
+                break
+            self.offsets.append(offset)
+            offset += chunk_size
             self.width = width
             self.height = height
 
