@@ -1,7 +1,7 @@
 
 import argparse
 import os
-from pyHIS import HISFile
+from pyHIS import FastHISFile
 import tifffile
 from tqdm import trange
 
@@ -14,11 +14,17 @@ def main():
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    with HISFile(args.his_file) as his:
+    his = FastHISFile(args.his_file)
+    image = None
+    try:
         for i in trange(len(his)):
             image, comment = his.read_image(i, return_comment=True)
             out_path = os.path.join(args.output_dir, f"{args.prefix}{i:04d}.tiff")
             tifffile.imwrite(out_path, image, imagej=True, metadata={"Info": comment})
+            image = None
+    finally:
+        image = None
+        his.close()
 
 
 if __name__ == "__main__":
