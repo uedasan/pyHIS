@@ -1,0 +1,26 @@
+[project]
+name = "pyhis"
+version = "0.2.1"
+description = "Read Hamamatsu HIS files and convert them to TIFF images."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "tifffile",
+    "tqdm",
+]
+
+[project.scripts]
+his2tiff = "his2tiff:main"
+
+[dependency-groups]
+dev = [
+    "pyinstaller",
+]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

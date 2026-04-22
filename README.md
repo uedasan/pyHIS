@@ -2,7 +2,7 @@
 
 pyHIS is a Python library and CLI tool for reading HIS files and converting them to sequential TIFF images.
 
-Current version: `0.2.0`
+Current version: `0.2.1`
 
 ## Features
 - Read HIS format files and extract image data and comments
@@ -11,11 +11,23 @@ Current version: `0.2.0`
 - `HISFile`: safe reader that returns copied NumPy arrays
 - `FastHISFile`: zero-copy reader via `mmap` for high-throughput reads
 
+## Setup
+```bash
+uv sync
+```
+
 ## Usage
 ```
-python his2tiff.py input.his output_dir --prefix img
+uv run his2tiff input.his output_dir --prefix img
 ```
 This will convert all images in `input.his` to TIFF files in `output_dir` with filenames like `img0000.tiff`, `img0001.tiff`, etc.
+
+If `output_dir` is omitted, `his2tiff` creates a `tiff` folder next to the input `.his` file. This is also the default behavior when dropping a `.his` file onto `his2tiff.exe` on Windows.
+
+## Build Exe
+```bash
+uv run pyinstaller his2tiff.spec
+```
 
 ## Compatibility Note
 `HISFile` now prioritizes safe Python usage over raw read speed.
