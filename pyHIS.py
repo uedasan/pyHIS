@@ -3,26 +3,44 @@ import mmap
 import struct
 import numpy as np
 
+
 class HISFile:
 
     HEADER_FORMAT = "<2s H H H H H H i H H d i 30b"
     HEADER_SIZE = struct.calcsize(HEADER_FORMAT)  # 1 chunkはHEADER_SIZE + comment_length + image_size
 
     def __init__(self, path):
+        self.path = None
+        self.fd = None
+        self.mm = None
+        self.offsets = []
         self.open(path)
 
     def __len__(self):
         return len(self.offsets)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+        return False
+
     def open(self, path):
+        self.close()
         self.path = path
         self.fd = open(path, "rb")
         self.mm = mmap.mmap(self.fd.fileno(), 0, access=mmap.ACCESS_READ)
         self.update_offsets()
 
     def close(self):
-        self.mm.close()
-        self.fd.close()
+        if self.mm is not None:
+            self.mm.close()
+            self.mm = None
+        if self.fd is not None:
+            self.fd.close()
+            self.fd = None
+        self.offsets = []
 
     def update_offsets(self):
         self.offsets = []
@@ -57,7 +75,7 @@ class HISFile:
         image = np.frombuffer(buffer=self.mm,
                               dtype=np.uint16,
                               count=width*height,
-                              offset=image_offset).reshape(height, width)
+                              offset=image_offset).reshape(height, width).copy()
         if return_comment:
             comment_offset = offset + self.HEADER_SIZE
             comment = self.mm[comment_offset:comment_offset + comment_length].decode('utf-8').strip()
@@ -68,18 +86,20 @@ class HISFile:
         offset = self.offsets[count]
         header = self.read_header(offset)
         comment_length, width, height = header[1:4]
+        if not 0 <= iy < height:
+            raise IndexError(f"line index out of range: {iy} not in [0, {height})")
         image_offset = offset + self.HEADER_SIZE + comment_length
         line_offset = image_offset + width * iy * 2
         line = np.frombuffer(buffer=self.mm,
                              dtype=np.uint16,
                              count=width,
-                             offset=line_offset)
+                             offset=line_offset).copy()
         return line
 
 if __name__ == "__main__":
     from tqdm import trange
     import tifffile
-    his = HISFile("a.his")
-    for i in trange(len(his)):
-        image, comment = his.read_image(i, return_comment=True)
-        tifffile.imwrite(f"img{i:04d}.tiff", image, imagej=True, metadata={"Info": comment})
+    with HISFile("a.his") as his:
+        for i in trange(len(his)):
+            image, comment = his.read_image(i, return_comment=True)
+            tifffile.imwrite(f"img{i:04d}.tiff", image, imagej=True, metadata={"Info": comment})
