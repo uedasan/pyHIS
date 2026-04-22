@@ -2,7 +2,7 @@
 
 pyHIS is a Python library and CLI tool for reading HIS files and converting them to sequential TIFF images.
 
-Current version: `1.0.1`
+Current version: `1.0.2`
 
 ## Features
 - Read HIS format files and extract image data and comments
