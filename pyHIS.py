@@ -1,5 +1,6 @@
 
 import mmap
+from operator import index
 import struct
 import numpy as np
 
@@ -69,6 +70,19 @@ class _BaseHISFile:
         image_offset = offset + self.HEADER_SIZE + comment_length
         return offset, comment_length, width, height, image_offset
 
+    def _read_lines(self, count, start, stop, step):
+        start, stop, step = map(index, (start, stop, step))
+        _, _, width, height, image_offset = self._frame_info(count)
+        if step <= 0:
+            raise ValueError("step must be positive")
+        if not 0 <= start <= stop <= height:
+            raise IndexError(f"line range out of bounds: [{start}, {stop}) for height {height}")
+        line_offset = image_offset + width * start * np.dtype(np.uint16).itemsize
+        block = np.frombuffer(
+            self.mm, dtype=np.uint16, count=width * (stop - start), offset=line_offset
+        ).reshape(stop - start, width)
+        return block[::step]
+
     def _read_comment(self, offset, comment_length):
         comment_offset = offset + self.HEADER_SIZE
         return self.mm[comment_offset:comment_offset + comment_length].decode("utf-8").strip()
@@ -110,6 +124,10 @@ class HISFile(_BaseHISFile):
                              offset=line_offset).copy()
         return line
 
+    def read_lines(self, count, start, stop, step=1):
+        """Return a copy of rows [start, stop) of the zero-based frame count."""
+        return self._read_lines(count, start, stop, step).copy()
+
 
 class FastHISFile(_BaseHISFile):
     """High-throughput HIS reader.
@@ -140,6 +158,11 @@ class FastHISFile(_BaseHISFile):
                              count=width,
                              offset=line_offset)
         return line
+
+    def read_lines(self, count, start, stop, step=1):
+        """Return a memory-mapped view of rows [start, stop) of frame count."""
+        return self._read_lines(count, start, stop, step)
+
 
 if __name__ == "__main__":
     from tqdm import trange
