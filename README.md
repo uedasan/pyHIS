@@ -32,7 +32,7 @@ uv run pyinstaller his2tiff.spec
 ## Compatibility Note
 `HISFile` now prioritizes safe Python usage over raw read speed.
 
-- `HISFile.read_image()` and `HISFile.read_line()` return copied NumPy arrays.
+- `HISFile.read_image()`, `read_line()`, and `read_lines()` return copied NumPy arrays.
 - `HISFile` supports `with`.
 - Code that relied on zero-copy arrays from `HISFile` should switch to `FastHISFile`.
 
@@ -44,7 +44,10 @@ from pyHIS import HISFile
 
 with HISFile("input.his") as his:
     image, comment = his.read_image(0, return_comment=True)
+    rows = his.read_lines(0, 100, 120, step=2)  # Rows 100, 102, ..., 118.
 ```
+
+`read_lines(count, start, stop, step=1)` reads a row block with one frame lookup. Frame and row indices are zero-based, `stop` is exclusive, and `step` must be positive. Both readers support the same arguments. `FastHISFile.read_lines()` returns a view, including for strided rows.
 
 High-throughput usage:
 
@@ -53,6 +56,8 @@ from pyHIS import FastHISFile
 
 his = FastHISFile("input.his")
 image, comment = his.read_image(0, return_comment=True)
+rows = his.read_lines(0, 100, 120, step=2)
+del image, rows
 his.close()
 ```
 
